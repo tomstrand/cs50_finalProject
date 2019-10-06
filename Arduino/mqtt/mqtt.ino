@@ -79,7 +79,7 @@ void setup() {
     while (true);
   }
 
-  client.begin(MQTT_BROKER_IP, net);
+  client.begin(MQTT_BROKER_IP, MQTT_PORT, net);
   client.onMessage(messageReceived);
 
   connect();
