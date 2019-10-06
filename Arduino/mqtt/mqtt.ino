@@ -21,7 +21,20 @@
 char ssid[] = SECRET_SSID;        // your network SSID (name)
 char pass[] = SECRET_PASS;    // your network password (use for WPA, or use as key for WEP)
 
+#define DHTPIN 1 //pin on board
+#define DHTTYPE DHT22 //Sensor type
+
+DHT dht(DHTPIN, DHTTYPE);
+
 int status = WL_IDLE_STATUS;     // the Wifi radio's status
+
+String topic = "/home/room1/sensor1";
+String temperature;
+
+//Variables DHT
+int chk;
+float hum;  //Stores humidity value
+float temp; //Stores temperature value
 
 // Initialize the client library
 WiFiClient net;
@@ -61,13 +74,31 @@ void connect() {
 
 }
 
-void messageReceived(String &topic, String &payload) {
+void messageReceived(String &topic, String &payload) 
+{
   Serial.println("incoming: " + topic + " - " + payload);
+}
+
+void sendMessage(String topic, float temp, float hum)
+{
+    StaticJsonDocument<200> doc;
+
+    //Add values to the Json document
+    doc["temperature"] = temp;
+    doc["humidity"] = hum;
+
+    String msg;
+
+    serializeJson(doc, msg);
+    
+    client.publish(topic, msg, false, 1);
+
+    return;
 }
 
 void setup() {
   //Initialize serial and wait for port to open:
-  Serial.begin(115200);
+  Serial.begin(9600);
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
@@ -83,7 +114,10 @@ void setup() {
   client.onMessage(messageReceived);
 
   connect();
+  
+  dht.begin();
 
+ 
 }
 
 
@@ -98,10 +132,26 @@ void loop() {
     connect();
   }
 
-  // publish a message roughly every 5 seconds
-  if (millis() - lastMillis > 5000) {
+
+    delay(2000);
+    //Read data and store it to variables hum and temp
+    hum = dht.readHumidity();
+    temp= dht.readTemperature();
+    
+    //Print temp and humidity values to serial monitor
+    Serial.print("Humidity: ");
+    Serial.print(hum);
+    Serial.print(" %, Temp: ");
+    Serial.print(temp);
+    Serial.println(" Celsius");
+    delay(10000); //Delay 2 sec.
+
+    
+  // publish a message roughly every 60 seconds
+  if (millis() - lastMillis > 60000) {
     lastMillis = millis();
-    client.publish("/hello", "Tommy");
+    sendMessage(topic, temp, hum);
+   //client.publish("/home/room1/sensor1", doc, false, 1);
   }
 
 }
