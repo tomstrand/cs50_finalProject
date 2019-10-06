@@ -20,6 +20,7 @@
 ///////please enter your sensitive data in the Secret tab/arduino_secrets.h
 char ssid[] = SECRET_SSID;        // your network SSID (name)
 char pass[] = SECRET_PASS;    // your network password (use for WPA, or use as key for WEP)
+
 int status = WL_IDLE_STATUS;     // the Wifi radio's status
 
 // Initialize the client library
@@ -47,7 +48,7 @@ void connect() {
   printWifiData();
 
   // attempt to connect to mqtt client
-  while (!client.connect("arduino", "try", "try")){
+  while (!client.connect("arduino", MQTT_USER, MQTT_PWD)){
     Serial.print("\nConnecting mqtt...");
     Serial.print(".");
     delay(1000);
@@ -64,7 +65,7 @@ void connect() {
 
 void setup() {
   //Initialize serial and wait for port to open:
-  Serial.begin(9600);
+  Serial.begin(115200);
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
@@ -76,10 +77,8 @@ void setup() {
     while (true);
   }
 
-  String fv = WiFi.firmwareVersion();
-  if (fv < "1.0.0") {
-    Serial.println("Please upgrade the firmware");
-  }
+  client.begin(MQTT_BROKER_IP, net);
+  client.onMessage(messageReceived);
 
   connect();
 
@@ -90,6 +89,18 @@ void loop() {
   // check the network connection once every 10 seconds:
   delay(10000);
   printCurrentNet();
+  
+  client.loop();
+
+  if (!client.connected()) {
+    connect();
+  }
+
+  // publish a message roughly every 5 seconds
+  if (millis() - lastMillis > 5000) {
+    lastMillis = millis();
+    client.publish("/hello", "Tommy");
+  }
 
 }
 
