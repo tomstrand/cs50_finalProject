@@ -28,9 +28,9 @@ MQTTClient client;
 
 unsigned long lastMillis = 0;
 
-void connect()
-{
-    // attempt to connect to Wifi network:
+void connect() {
+  
+  // attempt to connect to Wifi network:
   while (status != WL_CONNECTED) {
     Serial.print("Attempting to connect to WPA SSID: ");
     Serial.println(ssid);
@@ -39,13 +39,27 @@ void connect()
 
     // wait 10 seconds for connection:
     delay(10000);
-
   }
 
   // you're connected now, so print out the data:
   Serial.print("You're connected to the network");
   printCurrentNet();
   printWifiData();
+
+  // attempt to connect to mqtt client
+  while (!client.connect("arduino", "try", "try")){
+    Serial.print("\nConnecting mqtt...");
+    Serial.print(".");
+    delay(1000);
+  }
+
+  Serial.println("\nMqtt connected!");
+
+  client.subscribe("/hello");
+  // client.unsubscribe("/hello)");
+
+
+
 }
 
 void setup() {
