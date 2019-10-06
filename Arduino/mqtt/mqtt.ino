@@ -59,8 +59,10 @@ void connect() {
   client.subscribe("/hello");
   // client.unsubscribe("/hello)");
 
+}
 
-
+void messageReceived(String &topic, String &payload) {
+  Serial.println("incoming: " + topic + " - " + payload);
 }
 
 void setup() {
